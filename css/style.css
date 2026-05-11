@@ -599,7 +599,7 @@ th {
         background-image: url('../images/banner/MB03.jpg');
         background-attachment: scroll; /* Evita el problema en iOS */
         background-size: cover; /* O prueba con contain si sigue con zoom */
-        height: 20vh;
+        height: 100vh;
     }
     .modal .img-qr {
         width: 150px;

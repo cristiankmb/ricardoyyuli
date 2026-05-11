@@ -1,31 +1,64 @@
-var scroll = window.requestAnimationFrame ||
-  function(callback) { window.setTimeout(callback, 1000/60)};
+/**
+ * animations.js — Scroll reveal using IntersectionObserver
+ * Much more performant than rAF loop; works on all modern browsers.
+ * Falls back gracefully if IntersectionObserver is not supported.
+ */
 
-var elementsToShow = document.querySelectorAll('.show-on-scroll');
+(function () {
+  'use strict';
 
-function loop() {
-  elementsToShow.forEach(function (element) {
-    if (isElementInViewport(element)) {
-      element.classList.add('is-visible');
-    } else {
-      element.classList.remove('is-visible');
+  /**
+   * Reveal elements with class .show-on-scroll (flowers, icons, etc.)
+   * Once visible they stay visible (no remove on scroll-out for flowers/icons).
+   */
+  var revealObserver = new IntersectionObserver(
+    function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          // For flowers and icons we only animate in once
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    },
+    {
+      threshold: 0.15,        // trigger when 15% of element is visible
+      rootMargin: '0px 0px -40px 0px'
     }
-  });
-  scroll(loop);
-}
-
-loop();
-
-function isElementInViewport(el) {
-  // Special bonus for those using jQuery
-  if (typeof jQuery === "function" && el instanceof jQuery) {
-    el = el[0];
-  }
-  var rect =  el.getBoundingClientRect();
-  return (
-    (rect.top <= 0 && rect.bottom >= 0) ||
-    (rect.bottom >= (window.innerHeight || document.documentElement.clientHeight) && 
-      rect.top <= (window.innerHeight || document.documentElement.clientHeight)) ||
-    (rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight))
   );
-}
+
+  /**
+   * Generic .reveal elements (text, cards, etc.) — also one-shot.
+   */
+  var genericRevealObserver = new IntersectionObserver(
+    function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          genericRevealObserver.unobserve(entry.target);
+        }
+      });
+    },
+    {
+      threshold: 0.1,
+      rootMargin: '0px 0px -60px 0px'
+    }
+  );
+
+  // Attach observers after DOM is ready
+  function initReveal() {
+    document.querySelectorAll('.show-on-scroll').forEach(function (el) {
+      revealObserver.observe(el);
+    });
+    document.querySelectorAll('.reveal').forEach(function (el) {
+      genericRevealObserver.observe(el);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initReveal);
+  } else {
+    initReveal();
+  }
+
+})();
